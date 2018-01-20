@@ -383,21 +383,22 @@ static void finalizeHdr(Mat& m)
         m.dataend = m.datalimit = 0;
 }
 
-
+// 重要函数，所有的Mat构造函数最终都通过调用该成员函数实现。该函数创建矩阵，申请内存。
 void Mat::create(int d, const int* _sizes, int _type)
 {
     int i;
     CV_Assert(0 <= d && d <= CV_MAX_DIM && _sizes);
     _type = CV_MAT_TYPE(_type);
 
-    if( data && (d == dims || (d == 1 && dims <= 2)) && _type == type() )
+    // 检查现有mat的维度和类型是否和新创建的相同，如果相同，直接返回
+    if( data && (d == dims || (d == 1 && dims <= 2)) && _type == type() ) // 2维矩阵，检查rows和cols是否和新创建矩阵大小一致
     {
         if( d == 2 && rows == _sizes[0] && cols == _sizes[1] )
             return;
         for( i = 0; i < d; i++ )
             if( size[i] != _sizes[i] )
                 break;
-        if( i == d && (d > 1 || size[1] == 1))
+        if( i == d && (d > 1 || size[1] == 1)) // 其他维度的矩阵，检查size是否和新创建矩阵的size相同
             return;
     }
 
@@ -409,7 +410,7 @@ void Mat::create(int d, const int* _sizes, int _type)
         _sizes = _sizes_backup;
     }
 
-    release();
+    release(); // 释放当前矩阵的内存
     if( d == 0 )
         return;
     flags = (_type & CV_MAT_TYPE_MASK) | MAGIC_VAL;
@@ -426,7 +427,7 @@ void Mat::create(int d, const int* _sizes, int _type)
             a = a0;
         CV_TRY
         {
-            u = a->allocate(dims, size, _type, 0, step.p, 0, USAGE_DEFAULT);
+            u = a->allocate(dims, size, _type, 0, step.p, 0, USAGE_DEFAULT); // 申请内存
             CV_Assert(u != 0);
         }
         CV_CATCH_ALL
@@ -438,8 +439,8 @@ void Mat::create(int d, const int* _sizes, int _type)
         CV_Assert( step[dims-1] == (size_t)CV_ELEM_SIZE(flags) );
     }
 
-    addref();
-    finalizeHdr(*this);
+    addref(); // 增加引用计数
+    finalizeHdr(*this); // 更新datastart, dataend, datalimit
 }
 
 void Mat::create(const std::vector<int>& _sizes, int _type)
